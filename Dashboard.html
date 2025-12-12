@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Performance Analysis System - Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2180a8;
+            --success: #219653;
+            --warning: #f2994a;
+            --danger: #c01541;
+            --dark: #1f2121;
+            --light: #fcfcf9;
+            --text: #134252;
+            --border: #5e5240;
+            --transition: 0.3s ease;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--light);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* HEADER */
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, #1a6a91 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        .header-subtitle {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-top: 0.5rem;
+        }
+
+        /* NAVIGATION */
+        nav {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        nav button {
+            background: none;
+            border: none;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-size: 1rem;
+            color: var(--text);
+            transition: all var(--transition);
+            border-bottom: 3px solid transparent;
+        }
+
+        nav button:hover, nav button.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        /* MAIN CONTAINER */
+        main {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* CARDS & GRID */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform var(--transition), box-shadow var(--transition);
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+        }
+
+        .card h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+
+        .metric {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 0.5rem 0;
+        }
+
+        .metric-label {
+            font-size: 0.95rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        .status.good { background: rgba(33, 150, 83, 0.15); color: var(--success); }
+        .status.warning { background: rgba(242, 153, 74, 0.15); color: var(--warning); }
+        .status.critical { background: rgba(192, 21, 47, 0.15); color: var(--danger); }
+
+        /* CHART CONTAINERS */
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .chart-container h3 {
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+            margin-bottom: 1rem;
+        }
+
+        /* INSIGHTS & FINDINGS */
+        .insights {
+            background: #f9f6f3;
+            border-left: 5px solid var(--primary);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+
+        .insights h4 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .insights ul {
+            margin-left: 1.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .insights li {
+            margin-bottom: 0.5rem;
+            color: #555;
+        }
+
+        /* RECOMMENDATIONS */
+        .recommendations {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .rec-item {
+            padding: 1.5rem;
+            margin: 1rem 0;
+            background: #f9f6f3;
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
+        }
+
+        .rec-item h4 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .rec-item p {
+            color: #555;
+            margin-bottom: 0.5rem;
+        }
+
+        .rec-timeline {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+
+        /* TABLES */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        th {
+            background: #f0f0f0;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text);
+            border-bottom: 2px solid var(--border);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        tr:hover {
+            background: #f9f9f9;
+        }
+
+        /* FOOTER */
+        footer {
+            background: var(--dark);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 4rem;
+        }
+
+        footer p {
+            margin: 0.5rem 0;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8rem;
+            }
+
+            nav ul {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            nav button {
+                border-bottom: 3px solid transparent;
+                padding: 0.5rem 0;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-wrapper {
+                height: 300px;
+            }
+        }
+
+        /* LOADING */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--primary);
+        }
+
+        /* BADGES */
+        .badge {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin: 0.2rem;
+        }
+
+        .badge-physics { background: rgba(192, 21, 47, 0.15); color: var(--danger); }
+        .badge-math { background: rgba(242, 153, 74, 0.15); color: var(--warning); }
+        .badge-biology { background: rgba(33, 150, 83, 0.15); color: var(--success); }
+        .badge-english { background: rgba(33, 128, 141, 0.15); color: var(--primary); }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            font-weight: 500;
+            color: #666;
+        }
+
+        .stat-value {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <header>
+        <h1>📊 Student Performance Analysis System</h1>
+        <p>Data-Driven Educational Excellence</p>
+        <p class="header-subtitle">Digital Egypt Pioneers Initiative (DEPI) - Third Generation</p>
+    </header>
+
+    <!-- NAVIGATION -->
+    <nav>
+        <ul>
+            <li><button class="nav-btn active" onclick="showSection('overview')">📈 Overview</button></li>
+            <li><button class="nav-btn" onclick="showSection('analysis')">🔍 Analysis</button></li>
+            <li><button class="nav-btn" onclick="showSection('visualizations')">📊 Visualizations</button></li>
+            <li><button class="nav-btn" onclick="showSection('recommendations')">💡 Recommendations</button></li>
+            <li><button class="nav-btn" onclick="showSection('team')">👥 Team</button></li>
+        </ul>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main>
+        <!-- OVERVIEW SECTION -->
+        <section id="overview" class="section active">
+            <h2 style="color: var(--primary); margin-bottom: 2rem; font-size: 2rem;">📋 Project Overview</h2>
+
+            <div class="grid">
+                <div class="card">
+                    <h3>🎯 Objective</h3>
+                    <p>Transform raw, unstructured student data into actionable insights through a complete data analytics pipeline. Enable educational administrators to make data-driven decisions about student performance, curriculum difficulty, and resource allocation.</p>
+                </div>
+
+                <div class="card">
+                    <h3>📊 Key Metrics</h3>
+                    <div class="stat-row">
+                        <span class="stat-label">Records Processed:</span>
+                        <span class="stat-value">36,500+</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Data Quality:</span>
+                        <span class="stat-value">99.8%</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Students Tracked:</span>
+                        <span class="stat-value">5,000+</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>🔄 Four-Phase Pipeline</h3>
+                    <p><strong>Phase I:</strong> Data Preprocessing (ETL)</p>
+                    <p><strong>Phase II:</strong> Database Design (3NF)</p>
+                    <p><strong>Phase III:</strong> SQL Analysis</p>
+                    <p><strong>Phase IV:</strong> Visualizations</p>
+                </div>
+            </div>
+
+            <!-- KEY FINDINGS CARDS -->
+            <h2 style="color: var(--primary); margin: 3rem 0 2rem; font-size: 1.8rem;">🔑 Key Performance Indicators</h2>
+
+            <div class="grid">
+                <div class="card metric">
+                    <div class="metric-label">Average Student Score</div>
+                    <div class="metric-value">56.0</div>
+                    <div class="status warning">Needs Improvement</div>
+                </div>
+
+                <div class="card metric">
+                    <div class="metric-label">Attendance Rate</div>
+                    <div class="metric-value">50.2%</div>
+                    <div class="status critical">Critical</div>
+                </div>
+
+                <div class="card metric">
+                    <div class="metric-label">Top Performers (A-grade)</div>
+                    <div class="metric-value">10</div>
+                    <div class="status good">Excellence Identified</div>
+                </div>
+
+                <div class="card metric">
+                    <div class="metric-label">At-Risk Students</div>
+                    <div class="metric-value">45%</div>
+                    <div class="status critical">Intervention Needed</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ANALYSIS SECTION -->
+        <section id="analysis" class="section">
+            <h2 style="color: var(--primary); margin-bottom: 2rem; font-size: 2rem;">🔍 SQL Analysis & Findings</h2>
+
+            <!-- QUERY 1: TOP PERFORMERS -->
+            <div class="chart-container">
+                <h3>Query 1: Top Performers by Subject</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th>Student Name</th>
+                            <th>Score</th>
+                            <th>Grade</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="badge badge-biology">Biology</span></td>
+                            <td>Aaron David Moore</td>
+                            <td><strong>100</strong></td>
+                            <td>A</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-biology">Biology</span></td>
+                            <td>Erik Lisa King</td>
+                            <td><strong>100</strong></td>
+                            <td>A</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-english">English</span></td>
+                            <td>Holly Natalie Coleman</td>
+                            <td><strong>100</strong></td>
+                            <td>A</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-math">Math</span></td>
+                            <td>Kelsey Shannon Stone</td>
+                            <td><strong>100</strong></td>
+                            <td>A</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="insights">
+                    <h4>🎯 Key Findings:</h4>
+                    <ul>
+                        <li>Excellence exists across all subjects (100/A grades achieved)</li>
+                        <li>Multiple perfect scores indicate achievable standards</li>
+                        <li>Top performers can serve as peer mentors</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- QUERY 2: ATTENDANCE STATISTICS -->
+            <div class="chart-container">
+                <h3>Query 2: Attendance Statistics by Subject</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th>Present/Late</th>
+                            <th>Absent/Excused</th>
+                            <th>Attendance Rate</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="badge badge-biology">Biology</span></td>
+                            <td>655</td>
+                            <td>613</td>
+                            <td><strong>51.66%</strong></td>
+                            <td><span class="status good">Best</span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-math">Math</span></td>
+                            <td>640</td>
+                            <td>616</td>
+                            <td><strong>50.96%</strong></td>
+                            <td><span class="status warning">Moderate</span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-english">English</span></td>
+                            <td>630</td>
+                            <td>624</td>
+                            <td><strong>50.24%</strong></td>
+                            <td><span class="status warning">Moderate</span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-math">Chemistry</span></td>
+                            <td>592</td>
+                            <td>650</td>
+                            <td><strong>47.67%</strong></td>
+                            <td><span class="status warning">Low</span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-physics">Physics</span></td>
+                            <td>589</td>
+                            <td>651</td>
+                            <td><strong>47.50%</strong></td>
+                            <td><span class="status critical">Lowest</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="insights">
+                    <h4>⚠️ Critical Findings:</h4>
+                    <ul>
+                        <li>Only 50% attendance rate across all subjects—systemic engagement crisis</li>
+                        <li>Biology leads with 51.66%, Physics trails at 47.5%</li>
+                        <li>Low attendance directly causes 30% zero-score rate</li>
+                        <li>73% of cohort has attendance issues (late, absent, or excused)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- QUERY 3: SUBJECT PERFORMANCE AVERAGES -->
+            <div class="chart-container">
+                <h3>Query 3: Subject Performance Averages (Curriculum Difficulty)</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Subject</th>
+                            <th>Average Score</th>
+                            <th>Difficulty Level</th>
+                            <th>Recommendation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td><span class="badge badge-physics">Physics</span></td>
+                            <td><strong>55.34</strong></td>
+                            <td><span class="status critical">HARDEST</span></td>
+                            <td>Urgent support needed</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td><span class="badge badge-math">Math</span></td>
+                            <td><strong>55.96</strong></td>
+                            <td><span class="status warning">Hard</span></td>
+                            <td>Additional tutoring</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td><span class="badge badge-math">Chemistry</span></td>
+                            <td><strong>56.08</strong></td>
+                            <td>Moderate</td>
+                            <td>Standard support</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td><span class="badge badge-english">English</span></td>
+                            <td><strong>56.59</strong></td>
+                            <td>Easier</td>
+                            <td>Best practices model</td>
+                        </tr>
+                        <tr>
+                            <td>5</td>
+                            <td><span class="badge badge-biology">Biology</span></td>
+                            <td><strong>56.78</strong></td>
+                            <td><span class="status good">EASIEST</span></td>
+                            <td>Share methodology</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="insights">
+                    <h4>📊 Key Insights:</h4>
+                    <ul>
+                        <li>Physics is significantly harder than other subjects (55.34 avg)</li>
+                        <li>Biology is most accessible (56.78 avg)—only 1.5 point variance</li>
+                        <li>Curriculum is relatively balanced but Physics needs intervention</li>
+                        <li>Recommendation: Adopt Biology's teaching methodology for Physics</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- VISUALIZATIONS SECTION -->
+        <section id="visualizations" class="section">
+            <h2 style="color: var(--primary); margin-bottom: 2rem; font-size: 2rem;">📊 Data Visualizations</h2>
+
+            <!-- VIZ 1: SUBJECT DIFFICULTY -->
+            <div class="chart-container">
+                <h3>Average Score per Subject (Difficulty Analysis)</h3>
+                <div class="chart-wrapper">
+                    <canvas id="chart1"></canvas>
+                </div>
+                <div class="insights">
+                    <h4>Visual Interpretation:</h4>
+                    <ul>
+                        <li>Physics (leftmost, darkest) clearly shows lowest performance</li>
+                        <li>Color gradient represents difficulty level</li>
+                        <li>Action: Implement Physics tutoring programs immediately</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- VIZ 2: SCORE DISTRIBUTION -->
+            <div class="chart-container">
+                <h3>Score Distribution (Bimodal Pattern - Attendance Crisis)</h3>
+                <div class="chart-wrapper">
+                    <canvas id="chart2"></canvas>
+                </div>
+                <div class="insights">
+                    <h4>Critical Finding:</h4>
+                    <ul>
+                        <li><strong>Peak 1 (Score 0):</strong> ~1,500 students (30% of total) - absent or non-participating</li>
+                        <li><strong>Peak 2 (Score 60-100):</strong> Students who participated - distributed across grades</li>
+                        <li><strong>Implication:</strong> This is NOT normal grade distribution - it's an engagement crisis</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- VIZ 3: ATTENDANCE STATUS -->
+            <div class="chart-container">
+                <h3>Attendance Status Distribution</h3>
+                <div class="chart-wrapper">
+                    <canvas id="chart3"></canvas>
+                </div>
+                <div class="insights">
+                    <h4>Systemic Problem:</h4>
+                    <ul>
+                        <li>Excused: 27.8% (legitimate reasons)</li>
+                        <li>Present: 26.9% (on time, regular) ← ONLY THIS IS IDEAL</li>
+                        <li>Late: 27.3% (tardiness issue)</li>
+                        <li>Absent: 26.5% (unexcused)</li>
+                        <li><strong>73% have attendance issues</strong> - not individual problems, systemic</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- VIZ 4: PERFORMANCE BY LEVEL -->
+            <div class="chart-container">
+                <h3>Performance Decline by Academic Level</h3>
+                <div class="chart-wrapper">
+                    <canvas id="chart4"></canvas>
+                </div>
+                <div class="insights">
+                    <h4>⚠️ Declining Performance Trend:</h4>
+                    <ul>
+                        <li>Freshman: 57.2 (baseline) ✅</li>
+                        <li>Junior: 55.8 (↓ -1.4 pts) 🟡</li>
+                        <li>Sophomore: 55.5 (↓ -1.7 pts) 🟡</li>
+                        <li>Senior: 54.2 (↓ -3.0 pts) 🔴 CRITICAL</li>
+                        <li><strong>Possible Causes:</strong> Burnout, course difficulty, lost motivation, external commitments</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- VIZ 5: TOP STUDENTS -->
+            <div class="chart-container">
+                <h3>Top 10 Students (Excellence Recognition)</h3>
+                <table style="width: 100%; margin: 1rem 0;">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Student Name</th>
+                            <th>Average Score</th>
+                            <th>Grade</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>🥇</td>
+                            <td>Lawrence Thomas Armstrong</td>
+                            <td>98</td>
+                            <td>A+</td>
+                        </tr>
+                        <tr>
+                            <td>🥈</td>
+                            <td>Joshua Sara Gonzalez</td>
+                            <td>97</td>
+                            <td>A+</td>
+                        </tr>
+                        <tr>
+                            <td>🥉</td>
+                            <td>James Elizabeth Pruitt</td>
+                            <td>96</td>
+                            <td>A</td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>Daniel Tamara Lopez</td>
+                            <td>95</td>
+                            <td>A</td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>Rachel Gabriella Rivera</td>
+                            <td>94</td>
+                            <td>A</td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>Megan Steven Richardson</td>
+                            <td>93</td>
+                            <td>A</td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>Kristin Daniel Copeland</td>
+                            <td>92</td>
+                            <td>A</td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>Sandra Ashley Lam</td>
+                            <td>91</td>
+                            <td>A</td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>Brandy Kenneth Long</td>
+                            <td>90</td>
+                            <td>A</td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>Brenda Ruth Ortega</td>
+                            <td>89</td>
+                            <td>A</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="insights">
+                    <h4>✅ Positive Finding:</h4>
+                    <ul>
+                        <li>All top 10 score 89+ (A-grade excellence)</li>
+                        <li>Score spread: 89-98 (tight clustering)</li>
+                        <li>These students demonstrate achievable excellence</li>
+                        <li><strong>Strategic Use:</strong> Peer mentoring, tutoring programs, scholarship programs</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- VIZ 6: BOXPLOT SUMMARY -->
+            <div class="chart-container">
+                <h3>Score Distribution by Subject (Statistical Spread)</h3>
+                <table style="width: 100%; margin: 1rem 0;">
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th>Median</th>
+                            <th>IQR</th>
+                            <th>Range</th>
+                            <th>Pattern</th>
+                            <th>Recommendation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="badge badge-english">English</span></td>
+                            <td>~68</td>
+                            <td>20</td>
+                            <td>0-100</td>
+                            <td>Consistent</td>
+                            <td>Model department</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-biology">Biology</span></td>
+                            <td>~67</td>
+                            <td>18</td>
+                            <td>0-100</td>
+                            <td>Balanced</td>
+                            <td>Share best practices</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-physics">Physics</span></td>
+                            <td>~65</td>
+                            <td>25</td>
+                            <td>0-100</td>
+                            <td>Highly Variable</td>
+                            <td>Standardize teaching</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-math">Chemistry</span></td>
+                            <td>~70</td>
+                            <td>22</td>
+                            <td>0-100</td>
+                            <td>Moderate</td>
+                            <td>Consistency program</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-math">Math</span></td>
+                            <td>~65</td>
+                            <td>20</td>
+                            <td>0-100</td>
+                            <td>Variable</td>
+                            <td>Additional support</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="insights">
+                    <h4>📊 Statistical Interpretation:</h4>
+                    <ul>
+                        <li>Physics has widest spread (IQR=25) → Most inconsistent results</li>
+                        <li>Chemistry has highest median (70) → Most consistent success</li>
+                        <li>All subjects have low outliers → Weak students present everywhere</li>
+                        <li><strong>Action:</strong> Adopt Chemistry methodology; standardize Physics teaching</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- RECOMMENDATIONS SECTION -->
+        <section id="recommendations" class="section">
+            <h2 style="color: var(--primary); margin-bottom: 2rem; font-size: 2rem;">💡 Strategic Recommendations</h2>
+
+            <div class="recommendations">
+                <h3 style="color: var(--primary); margin-bottom: 1.5rem;">🎯 Immediate Actions (Week 1-2)</h3>
+
+                <div class="rec-item">
+                    <h4>1. Attendance Incentive Program</h4>
+                    <p><strong>Target:</strong> Increase from 50% to 70% attendance</p>
+                    <p><strong>Actions:</strong></p>
+                    <ul style="margin-left: 1.5rem;">
+                        <li>Implement reward system for perfect attendance</li>
+                        <li>Send automated parent notifications for absences</li>
+                        <li>Create make-up sessions for excused absences</li>
+                        <li>Track progress weekly with dashboard</li>
+                    </ul>
+                    <span class="rec-timeline">Week 1-2</span>
+                </div>
+
+                <div class="rec-item">
+                    <h4>2. Physics Support Initiative</h4>
+                    <p><strong>Target:</strong> Improve Physics average from 55.34 to 60+</p>
+                    <p><strong>Actions:</strong></p>
+                    <ul style="margin-left: 1.5rem;">
+                        <li>Hire/train additional Physics tutors immediately</li>
+                        <li>Form peer mentoring groups with top 10 students</li>
+                        <li>Review Physics curriculum for gaps and difficulty</li>
+                        <li>Schedule mandatory weekly office hours</li>
+                    </ul>
+                    <span class="rec-timeline">Week 1-2</span>
+                </div>
+
+                <div class="rec-item">
+                    <h4>3. Senior Class Intervention</h4>
+                    <p><strong>Target:</strong> Reverse performance decline (54.2 → 57+)</p>
+                    <p><strong>Actions:</strong></p>
+                    <ul style="margin-left: 1.5rem;">
+                        <li>Meet individually with Senior students</li>
+                        <li>Assess workload and stress levels</li>
+                        <li>Adjust course prerequisites if needed</li>
+                        <li>Provide mental health and counseling services</li>
+                    </ul>
+                    <span class="rec-timeline">Week 1-2</span>
+                </div>
+            </div>
+
+            <div class="recommendations" style="margin-top: 2rem;">
+                <h3 style="color: var(--primary); margin-bottom: 1.5rem;">🔄 Medium-Term Actions (Month 1-3)</h3>
+
+                <div class="rec-item">
+                    <h4>4. Attendance System Overhaul</h4>
+                    <p><strong>Timeline:</strong> Month 1-3</p>
+                    <ul style="margin-left: 1.5rem;">
+                        <li>Deploy automated absence notifications to parents</li>
+                        <li>Build real-time dashboard for administrators</li>
+                        <li>Create mobile app for students/parents</li>
+                        <li>Integrate with counseling services</li>
+                    </ul>
+                    <span class="rec-timeline">Month 1-3</span>
+                </div>
+
+                <div class="rec-item">
+                    <h4>5. Curriculum Review Committee</h4>
+                    <p><strong>Timeline:</strong> Month 1-3</p>
+                    <ul style="margin-left: 1.5rem;">
+                        <li>Analyze Biology's successful teaching methods</li>
+                        <li>Document best practices for Physics department</li>
+                        <li>Train other departments on successful approaches</li>
+                        <li>Establish subject-wide standardization</li>
+                    </ul>
+                    <span class="rec-timeline">Month 1-3</span>
+                </div>
+
+                <div class="rec-item">
+                    <h4>6. Mandatory Tutoring Program</h4>
+                    <p><strong>Timeline:</strong> Month 1-3</p>
+                    <ul style="margin-left: 1.5rem;">
+                        <li>All students scoring <60 get mandatory tutoring</li>
+                        <li>2-3 hours per week minimum requirement</li>
+                        <li>Monthly progress reviews and adjustments</li>
+                        <li>Re-assessment after 4 weeks</li>
+                    </ul>
+                    <span class="rec-timeline">Month 1-3</span>
+                </div>
+            </div>
+
+            <div class="recommendations" style="margin-top: 2rem;">
+                <h3 style="color: var(--primary); margin-bottom: 1.5rem;">📊 Long-Term Actions (Semester/Year)</h3>
+
+                <div class="rec-item">
+                    <h4>7. Data-Driven Planning Culture</h4>
+                    <p><strong>Timeline:</strong> Ongoing</p>
+                    <ul style="margin-left: 1.5rem;">
+                        <li>Use dashboard for all admissions/placement decisions</li>
+                        <li>Quarterly performance reviews with leadership</li>
+                        <li>Benchmark against regional/national standards</li>
+                        <li>Implement predictive analytics for at-risk detection</li>
+                    </ul>
+                    <span class="rec-timeline">Semester/Year</span>
+                </div>
+
+                <div class="rec-item">
+                    <h4>8. Continuous Monitoring System</h4>
+                    <p><strong>Timeline:</strong> Ongoing</p>
+                    <ul style="margin-left: 1.5rem;">
+                        <li>Monthly KPI reports to leadership</li>
+                        <li>Semester-over-semester trend analysis</li>
+                        <li>Student satisfaction and feedback surveys</li>
+                        <li>Adjust interventions based on real data</li>
+                    </ul>
+                    <span class="rec-timeline">Semester/Year</span>
+                </div>
+            </div>
+
+            <!-- SUCCESS METRICS -->
+            <div class="chart-container" style="margin-top: 2rem;">
+                <h3>📈 Success Metrics & Targets</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Current</th>
+                            <th>Target</th>
+                            <th>Timeline</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Attendance Rate</td>
+                            <td>50.2%</td>
+                            <td>70%</td>
+                            <td>2 months</td>
+                            <td><span class="status critical">Critical</span></td>
+                        </tr>
+                        <tr>
+                            <td>Physics Average Score</td>
+                            <td>55.34</td>
+                            <td>60+</td>
+                            <td>1 month</td>
+                            <td><span class="status critical">High Priority</span></td>
+                        </tr>
+                        <tr>
+                            <td>Senior Performance</td>
+                            <td>54.2</td>
+                            <td>56+</td>
+                            <td>3 months</td>
+                            <td><span class="status warning">Important</span></td>
+                        </tr>
+                        <tr>
+                            <td>At-Risk Students</td>
+                            <td>45%</td>
+                            <td>30%</td>
+                            <td>1 semester</td>
+                            <td><span class="status warning">Ongoing</span></td>
+                        </tr>
+                        <tr>
+                            <td>Overall Average Score</td>
+                            <td>56.0</td>
+                            <td>62+</td>
+                            <td>1 semester</td>
+                            <td><span class="status warning">Strategic</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- TEAM SECTION -->
+        <section id="team" class="section">
+            <h2 style="color: var(--primary); margin-bottom: 2rem; font-size: 2rem;">👥 Project Team</h2>
+
+            <div class="grid">
+                <div class="card">
+                    <h3>👔 Omar Reda El-Shaer</h3>
+                    <p><strong>Role:</strong> Project Lead</p>
+                    <p><strong>Responsibilities:</strong></p>
+                    <ul style="margin-left: 1.5rem;">
+                        <li>Project planning & coordination</li>
+                        <li>Stakeholder communication</li>
+                        <li>Presentation leadership</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>💾 Sama El-Sayed Ahmed</h3>
+                    <p><strong>Role:</strong> Data Engineering</p>
+                    <p><strong>Responsibilities:</strong></p>
+                    <ul style="margin-left: 1.5rem;">
+                        <li>ETL pipeline development</li>
+                        <li>Data preprocessing</li>
+                        <li>Data quality assurance</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>🗄️ Phoebe Emile Roshdy</h3>
+                    <p><strong>Role:</strong> Database Design</p>
+                    <p><strong>Responsibilities:</strong></p>
+                    <ul style="margin-left: 1.5rem;">
+                        <li>ER diagram design</li>
+                        <li>Database schema normalization</li>
+                        <li>Query optimization</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>🔧 Mohamed Hossam El-Din</h3>
+                    <p><strong>Role:</strong> Backend Development</p>
+                    <p><strong>Responsibilities:</strong></p>
+                    <ul style="margin-left: 1.5rem;">
+                        <li>Database implementation</li>
+                        <li>SQL query development</li>
+                        <li>System architecture</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>📊 Ammar Mahmoud Oweidat</h3>
+                    <p><strong>Role:</strong> Data Analysis</p>
+                    <p><strong>Responsibilities:</strong></p>
+                    <ul style="margin-left: 1.5rem;">
+                        <li>Data analysis & insights</li>
+                        <li>Visualization creation</li>
+                        <li>Report generation</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="chart-container" style="margin-top: 2rem;">
+                <h3>📂 Project Deliverables</h3>
+                <ul style="margin-left: 1.5rem; margin-top: 1rem;">
+                    <li>✅ preprocessing_script.py (400+ lines, fully documented)</li>
+                    <li>✅ Students_queries.sql (3 complex queries)</li>
+                    <li>✅ visualization_script.py (6 professional charts)</li>
+                    <li>✅ ER Diagram (3NF normalized schema)</li>
+                    <li>✅ README.md (4,000+ words comprehensive documentation)</li>
+                    <li>✅ Final-report.pdf (11 pages detailed analysis)</li>
+                    <li>✅ Presentation slides (22 slides with speaker notes)</li>
+                    <li>✅ Interactive Dashboard (this application)</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+        <p><strong>Student Performance Analysis System</strong></p>
+        <p>Digital Egypt Pioneers Initiative – Third Generation</p>
+        <p>AI & Data Science Track | November 2025</p>
+        <p>© 2025 All Rights Reserved | Team: Omar | Sama | Phoebe | Mohamed | Ammar</p>
+    </footer>
+
+    <script>
+        // Navigation functionality
+        function showSection(sectionId) {
+            // Hide all sections
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => section.classList.remove('active'));
+
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+
+            // Update active nav button
+            const navBtns = document.querySelectorAll('.nav-btn');
+            navBtns.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+
+        // Chart 1: Subject Difficulty
+        const ctx1 = document.getElementById('chart1').getContext('2d');
+        new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: ['Physics', 'Math', 'Chemistry', 'English', 'Biology'],
+                datasets: [{
+                    label: 'Average Score',
+                    data: [55.34, 55.96, 56.08, 56.59, 56.78],
+                    backgroundColor: [
+                        'rgba(192, 21, 47, 0.7)',
+                        'rgba(242, 153, 74, 0.7)',
+                        'rgba(242, 153, 74, 0.6)',
+                        'rgba(33, 128, 141, 0.7)',
+                        'rgba(33, 150, 83, 0.7)'
+                    ]
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { x: { beginAtZero: true, max: 100 } }
+            }
+        });
+
+        // Chart 2: Score Distribution
+        const ctx2 = document.getElementById('chart2').getContext('2d');
+        new Chart(ctx2, {
+            type: 'bar',
+            data: {
+                labels: ['0', '10', '20', '30', '40', '50', '60', '70', '80', '90', '100'],
+                datasets: [{
+                    label: 'Frequency',
+                    data: [1500, 200, 150, 100, 80, 450, 420, 400, 420, 500, 280],
+                    backgroundColor: 'rgba(33, 128, 141, 0.7)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        // Chart 3: Attendance Status
+        const ctx3 = document.getElementById('chart3').getContext('2d');
+        new Chart(ctx3, {
+            type: 'doughnut',
+            data: {
+                labels: ['Excused', 'Present', 'Late', 'Absent'],
+                datasets: [{
+                    data: [27.8, 26.9, 27.3, 26.5],
+                    backgroundColor: [
+                        'rgba(33, 128, 141, 0.7)',
+                        'rgba(33, 150, 83, 0.7)',
+                        'rgba(242, 153, 74, 0.7)',
+                        'rgba(192, 21, 47, 0.7)'
+                    ]
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // Chart 4: Performance by Level
+        const ctx4 = document.getElementById('chart4').getContext('2d');
+        new Chart(ctx4, {
+            type: 'line',
+            data: {
+                labels: ['Freshman', 'Junior', 'Sophomore', 'Senior'],
+                datasets: [{
+                    label: 'Average Score',
+                    data: [57.2, 55.8, 55.5, 54.2],
+                    borderColor: 'rgba(192, 21, 47, 0.8)',
+                    backgroundColor: 'rgba(192, 21, 47, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 6,
+                    pointBackgroundColor: 'rgba(192, 21, 47, 0.8)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: false, min: 50, max: 60 } }
+            }
+        });
+    </script>
+</body>
+</html>
